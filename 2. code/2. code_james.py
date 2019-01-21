@@ -11,6 +11,7 @@
 ## 가장 공들여서 작성해야하는 일 중에 하나이니 꼭 신경써서 지어주시기 바랍니다.
 ## 변수는 사용하는 지점 바로 앞에서 할당해주시기 바랍니다.
 ## 파이썬에서 반복문 for loop는 순회가능한(iterable) 자료구조를 받아서 순회합니다.
+
 import os
 
 class Board():
@@ -40,10 +41,29 @@ class Board():
           print('{}번째 글이 성공적으로 작성되었습니다.'.format(len(self.posts)))
           input()
 
+## 안내문 출력
+## 글번호 입력받아서 해당글 덮어쓰기
+## self.posts[post_no] = input()
+     def modify_post(self):
+          print('----------------------------------------')
+          for index, post in enumerate(self.posts):
+               index = int(input('몇 번 글을 수정할까요 ? '))
+               self.posts[index-1] = input('수정 >')
+               return()
 
 
-def clear_screen():
-    os.system('cls' if os.name == 'nt' else 'clear')
+##          post_no = int(input('몇 번 글을 수정할까요 ? '))
+##          self.posts(post_no) = input('수정 >')
+
+                        
+     def delete_post(self):
+          index = int(input('몇 번 글을 지울까요 ? '))
+          del self.posts[index-1]
+## '=' 비교 연산자, '==' 대입연산자
+## 파이썬 index는 0부터
+          
+##def clear_screen():
+##    os.system('cls' if os.name == 'nt' else 'clear')
 
 def print_greeting_message():
     greeting_message = '''
@@ -57,11 +77,28 @@ def print_greeting_message():
     input('프로그램을 시작하시려면 엔터키를 입력하세요...')
 
 
+def print_supported_feature():
+     feature_list = '''
+     1. 작성하기
+     2. 수정하기
+     3. 삭제하기
+     '''
+     print(feature_list)
+     print('--------------------------------------------------------')
+
+
 if __name__ == "__main__":
 ##    clear_screen()
     print_greeting_message()
     board = Board()
     while True:
 ##        clear_screen()
+        print_supported_feature()
         board.list_posts()
-        board.create_post()
+        n = int(input(' >'))
+        if n == 1 :
+             board.create_post()
+        elif n == 2:
+             board.modify_post()
+        elif n == 3:
+             board.delete_post()
