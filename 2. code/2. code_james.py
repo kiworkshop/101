@@ -13,6 +13,7 @@
 ## 파이썬에서 반복문 for loop는 순회가능한(iterable) 자료구조를 받아서 순회합니다.
 
 import os
+import datetime
 
 class Board():
      def __init__(self):
@@ -30,9 +31,11 @@ class Board():
           ## for post in range posts: 와 같은 형식으로 활용하는 것이 일반적입니다.
           ##for i in range(0,index):
           ##   print('{}.'.format(i + 1),posts[i])
-          for index, post in enumerate(self.posts):
+          for index, post in enumerate(reversed(self.posts)):
                post_no = index + 1
-               print('{}. {}'.format(post_no, post))
+               now = datetime.datetime.now()
+               nowDate = now.strftime('%Y-%m-%d %H:%M')
+               print('{:^8}| {:<60} | {}'.format(post_no, post, nowDate))
                     
           
      def create_post(self):
