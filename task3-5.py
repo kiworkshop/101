@@ -47,7 +47,7 @@ class Board:
         with open('posts.csv', 'r') as csvfile:
             readers = csv.reader(csvfile)
             for row in readers:     # row마다 post 인스턴스 생성
-                globals()["post" + str(row[0])] = Post(row[0], row[1], row[2], row[3])  # post1, post2, post3... 과 같이 인스턴스 생성, row[0] = post_no, row[1] = post_title, row[2] = post_time, row[3] = post_time
+                globals()["post" + str(row[0])] = Post(row[0], row[1], row[2], row[3])  # post1, post2, post3... 과 같이 인스턴스 생성, row[0] = post_no, row[1] = post_title, row[2] = post_time, row[3] = post_shown_status
                 self.posts_instance_list.append(globals()["post" + row[0]])     # self.posts_instance_list에 인스턴스 추가
             self.no_of_posts = len(self.posts_instance_list)            # 전체 포스트의 개수 할당
 
