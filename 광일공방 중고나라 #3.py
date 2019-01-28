@@ -27,12 +27,12 @@ class Board():
             print("회원님이 한 번 작성해보시는 것이 어떨까요?")
             return
 
-        self.posts.sort(key=lambda list:list[0], reverse=True)
+        self.posts.sort(reverse=True)
 
         paged_posts = self.posts[self.posts_per_page*(self.page_index-1):self.posts_per_page*self.page_index]
 
-        for post in paged_posts: # [FIX] 포맷 padding 제대로 출력안됨. 들쑥날쑥
-            print('{:^8} | {:<60} | {}'.format(post[0], post[1], post[2]))
+        for post in paged_posts: # [FIX] 포맷 한글일 때 padding 제대로 출력안됨. 들쑥날쑥
+            print('{:^8} | {:<60} | {}'.format(post.post_no, post.post_title, post.post_inserted_time))
 
         page_length = self.get_page_length()
         print('Page: {}'.format(str(self.page_index) + '/' + str(page_length)))
@@ -54,7 +54,11 @@ class Board():
             func(self)
             with open ('중고나라 데이터.csv', 'w', encoding='utf8', newline='') as save_data:
                 posts_write = csv.writer(save_data)
-                posts_write.writerows(self.posts)
+                # posts_write.writerows(self.posts)
+                # [FIx] 코드가 너무 깊으면 나중에 Post를 Iterable한 클래스로 만들어서 writerows 메서드를 쓰자
+                for post in self.posts:
+                    posts_write.writerow([post.post_no, post.post_title, post.post_inserted_time])
+
                 input('저장이 완료되었습니다')
         return wrapper
 
@@ -63,12 +67,12 @@ class Board():
         if self.posts == []:
             post_no = 1
         if self.posts != []:
-            post_no = self.posts[0][0] + 1
+            post_no = self.posts[0].post_no + 1
         
         post_title = input('내용> ')
         
-        post_insert_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        self.posts.append(list([post_no, post_title, post_insert_time]))
+        post_inserted_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        self.posts.append(Post(post_no, post_title, post_inserted_time))
     
     @save_posts_decorator
     def update_post(self):
@@ -79,11 +83,11 @@ class Board():
             return
         
         try:
-            target_post_index = [index for index, post in enumerate(self.posts) if post[0] == target_post_no][0]
+            target_post_index = [index for index, post in enumerate(self.posts) if post.post_no == target_post_no][0]
         except:
             input('잘못된 입력입니다')
             return
-        self.posts[target_post_index][1] = input('수정할 내용을 입력해주세요 >')
+        self.posts[target_post_index].post_title = input('수정할 내용을 입력해주세요 >')
         print(str(target_post_no) +'번 글이 수정되었습니다')
     
     @save_posts_decorator
@@ -94,7 +98,7 @@ class Board():
             input('잘못된 입력입니다')
             return     
         try:
-            target_post_index = [index for index, post in enumerate(self.posts) if post[0] == target_post_no][0]
+            target_post_index = [index for index, post in enumerate(self.posts) if post.post_no == target_post_no][0]
         except:
             input('잘못된 입력입니다')
             return
@@ -110,7 +114,7 @@ class Board():
     def load_posts(self):
         with open ('중고나라 데이터.csv', 'r', encoding='utf8') as load_data:
             posts_read = csv.reader(load_data)
-            posts_read = [[int(post[0]), post[1], post[2]] for post in posts_read]
+            posts_read = [Post(int(post[0]), post[1], post[2]) for post in posts_read]
             self.posts = list(posts_read)
 
     def go_to_next_page(self):
@@ -130,6 +134,22 @@ class Board():
     
     def get_page_length(self):
         return len(self.posts)//(self.posts_per_page) + 1
+
+
+# Post Class만들기
+class Post:
+    def __init__(self, post_no, post_title, post_inserted_time):
+        self.post_no = post_no
+        self.post_title = post_title
+        self.post_inserted_time = post_inserted_time
+
+    def __lt__(self, other): # 별도 모듈 없이 클래스 정렬을 위함
+        return self.post_no < other.post_no
+
+
+
+
+
     
 def clear_screen():
     os.system('cls' if os.name == 'nt' else 'clear')
@@ -141,7 +161,7 @@ if __name__ == "__main__":
     try:
         board.load_posts()
     except:
-        print("파일을 불러오지 못했습니다.")
+        input("파일을 불러오지 못했습니다.")
 
     while True:
         clear_screen()
