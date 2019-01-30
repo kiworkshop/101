@@ -13,6 +13,18 @@ class Post:
         self.post_time = time
         self.post_shown_status = post_shown_status
 
+    @staticmethod
+    def check_shown_status_decorator(func):
+        def wrapper(self):
+            try:
+                if self.post_shown_status == "shown_denied":       # self.post_shown_status(노출 여부)가 shown_denied의 값이면 '존재하지 않는 게시글' 에러 발생
+                    raise Exception
+            except:
+                print("존재하지 않는 게시글입니다.")
+            func(self)
+        return wrapper    
+
+    @check_shown_status_decorator.__func__
     def update_title(self, updated_title):              # update_tilte로 title 수정 메서드 생성
         try:
             if self.post_shown_status == "shown_denied":       # self.post_shown_status(노출 여부)가 shown_denied의 값이면 '존재하지 않는 게시글' 에러 발생
@@ -22,6 +34,7 @@ class Post:
         if self.post_shown_status == "shown_permitted":        # self.post_shown_status(노출 여부)가 shown_permitted의 값이면, 제목 수정
             self.post_title = updated_title
 
+    @check_shown_status_decorator.__func__
     def change_shown_status(self):                  # change_shown_status로 post_shown_status를 변경하는 메서드 생성
         try:
             if self.post_shown_status == "shown_denied":       # self.post_shown_status(노출 여부)가 shown_denied의 값이면 '존재하지 않는 게시글' 에러 발생
@@ -32,10 +45,10 @@ class Post:
             self.post_shown_status = "shown_denied"
 
 class Board:
-    posts_per_page = 15     # 페이지당 게시글 수 저장
+    POSTS_PER_PAGE = 15     # 페이지당 게시글 수 저장
 
     def __init__(self):
-        self.posts_instance_list = list()       # Post 객체의 인스턴스들을 담을 리스트 생성
+        self.posts = list()       # Post 객체의 인스턴스들을 담을 리스트 생성
         self.posts_shown_list = list()          # 인스턴스 객체들 중에서 post_shown_status 값이 shown_permitted인 인스턴스를 담을 리스트 생성
         self.no_of_posts = 0                     # the number of posts로 포스트의 개수
         self.no_of_pages = 1                     # the number of pages로 총 페이지의 개수
@@ -44,24 +57,28 @@ class Board:
         self.load_data()                        # board 인스턴스가 생성될 때 데이터 로드
 
     def load_data(self):
-        with open('posts.csv', 'r') as csvfile:
-            readers = csv.reader(csvfile)
-            for row in readers:     # row마다 post 인스턴스 생성
-                globals()["post" + str(row[0])] = Post(row[0], row[1], row[2], row[3])  # post1, post2, post3... 과 같이 인스턴스 생성, row[0] = post_no, row[1] = post_title, row[2] = post_time, row[3] = post_shown_status
-                self.posts_instance_list.append(globals()["post" + row[0]])     # self.posts_instance_list에 인스턴스 추가
-            self.no_of_posts = len(self.posts_instance_list)            # 전체 포스트의 개수 할당
+        try:
+            csvfile = open('posts.csv', 'r')
+            readers = csv.readers(csvfile)
+            for row in readers:
+                globals()["post" + str(row[0])] = Post(row[0], row[1], row[2], row[3])  # post1, post2, post3... 과 같이 인스턴스 생성, row[0] = post_no, row[1] = post_title, row[2] = post_time, row[3] = post_time
+                self.posts.append(globals()["post" + row[0]])     # self.posts에 인스턴스 추가
+            self.no_of_posts = len(self.posts)            # 전체 포스트의 개수 할당
+            csvfile.close()
+        except:
+            pass
 
     def show_posts(self):
-        if self.posts_instance_list == []:
+        if self.posts == []:
             print('게시판에 아직 작성된 글이 없습니다.')
             print('한번 작성해보는 것은 어떨까요?')
             print('-------------------------------------')
             return
        
-        self.posts_shown_list = [post for post in self.posts_instance_list if post.post_shown_status == "shown_permitted"]     # 각 포스트마다 post_shown_status의 값이 shown_permitted인 값의 리스트 생성
-        self.no_of_pages = math.ceil( len(self.posts_shown_list) / Board.posts_per_page )       # self.posts_shown_list를 페이지당 게시글 수로 나눠서 the number of pages 총 페이지 수 생성
+        self.posts_shown_list = [post for post in self.posts if post.post_shown_status == "shown_permitted"]     # 각 포스트마다 post_shown_status의 값이 shown_permitted인 값의 리스트 생성
+        self.no_of_pages = math.ceil( len(self.posts_shown_list) / Board.POSTS_PER_PAGE )       # self.posts_shown_list를 페이지당 게시글 수로 나눠서 the number of pages 총 페이지 수 생성
        
-        page = [post for index, post in enumerate(self.posts_shown_list) if Board.posts_per_page * (self.current_page_no - 1) <= index < Board.posts_per_page * self.current_page_no]     # self.posts_shown_list에서 Board.posts_per_page와 self.current_page_no로 인덱스 설정
+        page = [post for index, post in enumerate(self.posts_shown_list) if Board.POSTS_PER_PAGE * (self.current_page_no - 1) <= index < Board.POSTS_PER_PAGE * self.current_page_no]     # self.posts_shown_list에서 Board.posts_per_page와 self.current_page_no로 인덱스 설정
         
         for post in page:       # self.current_page에 해당하는 페이지들에서 post를 하나씩 꺼내며 프린트
             print('{글번호:^8} | {글내용:60.60} | {작성일}'.format(글번호 = post.post_no, 글내용 = post.post_title, 작성일 = post.post_time))
@@ -69,12 +86,13 @@ class Board:
         print('-------------------------------------')
 
     def save_posts(self):
-        with open('posts.csv', 'w') as csvfile:
-            writer = csv.writer(csvfile)
-            list_for_save = []
-            for post in self.posts_instance_list:       # 세이브를 위한 리스트를 만들어서, post_no, post_title, post_time, post_shown_status의 값을 저장.
-                list_for_save.append([post.post_no, post.post_title, post.post_time, post.post_shown_status])
-            writer.writerows(list_for_save)    
+        csvfile = open('posts.csv', 'w')
+        writer = csv.writer(csvfile)
+        list_for_save = list()
+        for post in self.posts:       # 세이브를 위한 리스트를 만들어서, post_no, post_title, post_time, post_shown_status의 값을 저장.
+            list_for_save.append([post.post_no, post.post_title, post.post_time, post.post_shown_status])
+        writer.writerows(list_for_save)
+        csvfile.close()    
     
     @staticmethod
     def auto_save_posts_decorator(func):            # 자동 저장용 staticmethod, 함수 실행 후 self.save_posts() 실행.
@@ -89,19 +107,17 @@ class Board:
         written_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M')       # 작성 시간 생성
         self.no_of_posts += 1           # post 개수 하나 추가
         globals()["post" + str(self.no_of_posts)] = Post(post_no = self.no_of_posts, title = post_title, time = written_time, post_shown_status = "shown_permitted")     # post1, post2 ...의 post 인스턴스 생성. no_of_posts로 post_no 설정, post_title, written_time, shown_permitted로 속성값 생성
-        self.posts_instance_list.insert(0, globals()["post" + str(self.no_of_posts)])   # 생성된 포스트 인스턴스를 self.posts_instance_list의 맨 앞에 추가.
+        self.posts.insert(0, globals()["post" + str(self.no_of_posts)])   # 생성된 포스트 인스턴스를 self.posts_instance_list의 맨 앞에 추가.
         self.current_page_no = 1        # 작성시에는 최근글을 보여주어야 하기 때문에 현재 페이지를 1로 설정
-        if len(self.posts_shown_list) + 1 / Board.posts_per_page > self.no_of_pages:      # shown리스트로 페이지를 만들기 때문에 shown리스트에 +1을 한 값을 15(페이지당 포스트 수)로 나눴을 때 전체 페이지수보다 크면 전체 페이지수 +1
-            self.no_of_pages += 1
 
     @auto_save_posts_decorator.__func__
     def update_post(self):
         try:
             post_no = int(input('몇 번 글을 수정할까요?'))
-            if post_no < 1 or post_no > len(self.posts_instance_list):
+            if post_no < 1 or post_no > len(self.posts):
                 raise IndexError
             updated_post = input('수정 >')
-            self.posts_instance_list[ len(self.posts_instance_list) - post_no ].update_title(updated_post)  # 수정할 글 받아서 len(self.posts_instance_list) - post_no(=> index)에 update_tilte메서드 실행.
+            self.posts[ len(self.posts) - post_no ].update_title(updated_post)  # 수정할 글 받아서 len(self.posts_instance_list) - post_no(=> index)에 update_tilte메서드 실행.
         except ValueError:
             print('숫자를 입력해주세요')
         except IndexError:
@@ -111,9 +127,9 @@ class Board:
     def delete_post(self):
         try:
             post_no = int(input('몇 번 글을 지울까요?'))
-            if post_no < 1 or post_no > len(self.posts_instance_list):
+            if post_no < 1 or post_no > len(self.posts):
                 raise IndexError
-            self.posts_instance_list[ len(self.posts_instance_list) - post_no ].change_shown_status()     # 삭제할 글 받아서 len(self.posts_instance_list) - post_no(=> index)에 change_shown_status메서드 실행
+            self.posts[ len(self.posts) - post_no ].change_shown_status()     # 삭제할 글 받아서 len(self.posts_instance_list) - post_no(=> index)에 change_shown_status메서드 실행
         except ValueError:
             print('숫자를 입력해주세요')
         except IndexError:
