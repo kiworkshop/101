@@ -49,7 +49,6 @@ class Board:
 
     def __init__(self):
         self.posts = list()       # Post 객체의 인스턴스들을 담을 리스트 생성
-        self.posts_shown_list = list()          # 인스턴스 객체들 중에서 post_shown_status 값이 shown_permitted인 인스턴스를 담을 리스트 생성
         self.no_of_posts = 0                     # the number of posts로 포스트의 개수
         self.no_of_pages = 1                     # the number of pages로 총 페이지의 개수
         self.current_page_no = 1                # 현재 머물고 있는 페이지 no
