@@ -7,7 +7,7 @@ class Board():
         self.posts = []
         self.actions = [self.add_post, self.update_post, self.delete_post, self.go_to_previous_page, self.go_to_next_page]
         self.page_index = 1
-        self.posts_per_page = 15
+        self.posts_per_page = 15 
         
 
     @staticmethod 
